@@ -1,25 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import OpeningPage from './pages/OpeningPage';
+import InstructionsPage from './pages/InstructionsPage';
+import Part1 from './pages/Part1';
+import Part2 from './pages/Part2';
+import Part3 from './pages/Part3';
+import ReviewPage from './pages/ReviewPage';
+import Layout from './components/Layout';
+import { TimerProvider } from './context/TimerContext';
+import { AnswersProvider } from './context/AnswersContext';
+import SubmissionPage from './pages/SubmissionPage';   // ← new import
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <BrowserRouter>
+      <Routes>
+        {/* Opening page—no timer/bottom bar */}
+        <Route path="/" element={<OpeningPage />} />
+
+        {/* The test pages share the timer, bottom bar, and answer state */}
+        <Route
+          element={
+            <AnswersProvider>
+              <TimerProvider>
+                <Layout />
+              </TimerProvider>
+            </AnswersProvider>
+          }
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          <Route path="instructions" element={<InstructionsPage />} />
+          <Route path="part/1" element={<Part1 />} />
+          <Route path="part/2" element={<Part2 />} />
+          <Route path="part/3" element={<Part3 />} />
+          <Route path="review" element={<ReviewPage />} />
+          <Route path="submitted/:id" element={<SubmissionPage />} />
+        </Route>
+        
+        {/* Anything else → back to opening */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

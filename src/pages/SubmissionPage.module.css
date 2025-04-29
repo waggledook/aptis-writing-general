@@ -1,0 +1,93 @@
+.page {
+    padding: 2rem;
+    max-width: 800px;
+    margin: auto;
+  }
+  
+  .toolbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .toolbar button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+  
+  /* —— Submission content styling —— */
+  .section {
+    margin-bottom: 2rem;
+  }
+  
+  .promptText {
+    background: #f9f9f9;
+    padding: 0.75rem;
+    border-left: 4px solid #5a2d82;
+    margin-bottom: 1rem;
+  }
+  
+  .notesList {
+    list-style: disc inside;
+    margin-bottom: 1rem;
+  }
+  
+  .qaBlock {
+    background: #fafafa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  
+  .question {
+    margin-bottom: 0.5rem;
+  }
+  
+  .answer {
+    padding-left: 1rem;
+  }
+  
+  .dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  .dataTable th,
+  .dataTable td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  
+  .dataTable th {
+    background: #f0f0f0;
+    font-weight: bold;
+  }
+  /* Hide UI controls when printing/exporting */
+@media print {
+    .toolbar {
+      display: none !important;
+    }
+  }
+  
+  /* Global page settings for print */
+  @media print {
+    .page {
+      margin: 1in;            /* 1" margins all around */
+      font-size: 11pt;        /* slightly larger text */
+      color: #000;            /* ensure full-black for print */
+    }
+  
+    /* Force each section to start on a new page if you like */
+    section {
+      page-break-inside: avoid;
+      page-break-after: always;
+    }
+    /* Remove the last page-break */
+    section:last-child {
+      page-break-after: auto;
+    }
+  }
+  
+  
