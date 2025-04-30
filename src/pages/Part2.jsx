@@ -36,12 +36,13 @@ export default function Part2() {
   const [bookmarked, setBookmarked] = useState(false);
 
   // Restore saved HTML on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const node = editorRef.current;
     if (node && answers[2]) {
       node.innerHTML = answers[2];
     }
-  }, [answers]);
+}, []);
 
   // Update word-count & persist HTML
   const handleInput = () => {
@@ -94,6 +95,7 @@ export default function Part2() {
   };
 
   // Watch selection changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handler = () => {
       const sel = document.getSelection();
@@ -104,7 +106,7 @@ export default function Part2() {
     };
     document.addEventListener('selectionchange', handler);
     return () => document.removeEventListener('selectionchange', handler);
-}, [answers]);
+}, []);
 
   const limitReached = wordCount >= maxWords;
 

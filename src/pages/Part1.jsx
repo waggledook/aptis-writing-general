@@ -45,6 +45,8 @@ export default function Part1() {
   }
 
   // load saved HTML into the editors on mount
+  // ── run once on mount, avoid resetting during edits ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     answers[1].forEach((html, i) => {
       const node = refs.current[i];
@@ -58,7 +60,7 @@ export default function Part1() {
         });
       }
     });
-  }, [answers]);
+}, []);
 
   // handle any change (typing, paste, format)
   const handleInput = (i) => {
@@ -121,6 +123,7 @@ export default function Part1() {
   };
 
   // rerun active‐format check on selection changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handler = () => {
       const sel = document.getSelection();
@@ -133,7 +136,7 @@ export default function Part1() {
     };
     document.addEventListener('selectionchange', handler);
     return () => document.removeEventListener('selectionchange', handler);
-}, [answers]);
+}, []);
 
   return (
     <div className={styles.partContainer}>
