@@ -1,4 +1,5 @@
 // src/pages/Part2.jsx
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { AnswersContext } from '../context/AnswersContext';
 import styles from './Part2.module.css';
