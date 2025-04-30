@@ -31,7 +31,7 @@ export function TimerProvider({ children }) {
     const intervalId = setInterval(tick, 1000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [totalSeconds]);  // ← include totalSeconds here
 
   return (
     <TimerContext.Provider value={{ timeLeft }}>

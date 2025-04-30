@@ -41,7 +41,7 @@ export default function Part3() {
     if (node && answers[3]) {
       node.innerHTML = answers[3];
     }
-  }, []);
+}, [answers]);
 
   // persist & update word count
   const handleInput = () => {
@@ -100,7 +100,7 @@ export default function Part3() {
     };
     document.addEventListener('selectionchange', handler);
     return () => document.removeEventListener('selectionchange', handler);
-  }, []);
+}, [answers]);
 
   const limitReached = wordCount >= maxWords;
 

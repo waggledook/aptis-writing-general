@@ -58,7 +58,7 @@ export default function Part1() {
         });
       }
     });
-  }, []); // empty deps → run once on mount
+  }, [answers]);
 
   // handle any change (typing, paste, format)
   const handleInput = (i) => {
@@ -133,7 +133,7 @@ export default function Part1() {
     };
     document.addEventListener('selectionchange', handler);
     return () => document.removeEventListener('selectionchange', handler);
-  }, []);
+}, [answers]);
 
   return (
     <div className={styles.partContainer}>
