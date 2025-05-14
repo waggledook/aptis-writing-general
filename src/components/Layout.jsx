@@ -6,7 +6,13 @@ import { AnswersContext } from '../context/AnswersContext';
 import { saveSubmission } from '../services/submissions';
 import styles from './Layout.module.css';
 
-const TOTAL_SECONDS = 45 * 60;
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.innerText;
+}
+
+const TOTAL_SECONDS = 50 * 60;
 
 export default function Layout() {
   const { timeLeft } = useContext(TimerContext);
@@ -16,8 +22,6 @@ export default function Layout() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showTimeUpModal, setShowTimeUpModal] = useState(false);
   const [timeUpHandled, setTimeUpHandled] = useState(false);
-
-  // track whether the exam’s been submitted
   const [examSubmitted, setExamSubmitted] = useState(false);
 
   const nav = useNavigate();
@@ -42,7 +46,10 @@ export default function Layout() {
     nextPath = '/part/1';
   } else if (pathname.startsWith('/part/')) {
     const partNum = parseInt(pathname.split('/')[2], 10);
-    nextPath = partNum < 3 ? `/part/${partNum + 1}` : '/review';
+    // now handles parts 1–4
+    nextPath = partNum < 4
+      ? `/part/${partNum + 1}`
+      : '/review';
   }
 
   // Handle Next button
@@ -65,15 +72,28 @@ export default function Layout() {
   // Compute whether exam is still active
   const isExamActive = !examSubmitted;
 
-  // Compute part status
+  // Compute part status for review modal
   const partStatus = {
+    // Part 1: array of 5 short answers
     1:
       Array.isArray(answers[1]) &&
-      answers[1].some((html) => html.trim() !== '')
+      answers[1].some((html) => stripHtml(html).trim() !== '')
         ? 'Attempted'
         : 'Not Attempted',
+    // Part 2: single string
     2: (answers[2] || '').trim() ? 'Attempted' : 'Not Attempted',
-    3: (answers[3] || '').trim() ? 'Attempted' : 'Not Attempted',
+    // Part 3: array of 3 chat replies
+    3:
+      Array.isArray(answers[3]) &&
+      answers[3].some((html) => stripHtml(html).trim() !== '')
+      ? 'Attempted'
+      : 'Not Attempted',
+    // Part 4: array of 2 emails
+    4: 
+      Array.isArray(answers[4]) &&
+      answers[4].some((html) => stripHtml(html).trim() !== '')
+      ? 'Attempted'
+      : 'Not Attempted',
   };
 
   return (
@@ -102,7 +122,7 @@ export default function Layout() {
         <footer className={styles.bottomBar}>
           <button
             className={styles.menuButton}
-            onClick={() => setMenuOpen(open => !open)}
+            onClick={() => setMenuOpen((open) => !open)}
           >
             ☰
           </button>
@@ -126,7 +146,7 @@ export default function Layout() {
             onClick={(e) => e.stopPropagation()}
           >
             <ul className={styles.drawerList}>
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4].map((n) => (
                 <li key={n}>
                   <button
                     onClick={() => {
@@ -158,7 +178,7 @@ export default function Layout() {
               Please review the following parts
             </p>
             <ul className={styles.partList}>
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4].map((n) => (
                 <li key={n} className={styles.partItem}>
                   <button
                     className={styles.partButton}
@@ -224,13 +244,18 @@ export default function Layout() {
                 className={styles.submitConfirmButton}
                 onClick={async () => {
                   setShowSubmitConfirm(false);
-                  // 1. save to Firestore, get back the generated ID
                   // clear the auto-saved draft
                   localStorage.removeItem('aptis-writing-draft');
-                  const newId = await saveSubmission(answers);
-                  setExamSubmitted(true);
-                  // 2. navigate to /submitted/:id
-                  nav(`/submitted/${newId}`, { replace: true });
+                  try {
+                    console.log('Submitting answers...', answers);
+                    const newId = await saveSubmission(answers);
+                    console.log('Received submission ID:', newId);
+                    setExamSubmitted(true);
+                    nav(`/submitted/${newId}`, { replace: true });
+                  } catch (err) {
+                    console.error('Error submitting test:', err);
+                    alert('There was a problem submitting your test:\n' + err.message);
+                  }
                 }}
               >
                 Submit test
@@ -259,7 +284,6 @@ export default function Layout() {
                 className={styles.submitConfirmButton}
                 onClick={async () => {
                   setShowTimeUpModal(false);
-                  // clear the auto-saved draft
                   localStorage.removeItem('aptis-writing-draft');
                   const newId = await saveSubmission(answers);
                   setExamSubmitted(true);

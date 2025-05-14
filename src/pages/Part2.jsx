@@ -1,32 +1,17 @@
 // src/pages/Part2.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useContext, useRef, useEffect, useState } from 'react';
 import { AnswersContext } from '../context/AnswersContext';
 import styles from './Part2.module.css';
 
-// Count words in a plain‐text string
-function countWords(str) {
-  const m = str.trim().match(/\S+/g);
-  return m ? m.length : 0;
-}
-
-// Strip HTML tags for initial word-count
-function stripHtml(html) {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.innerText;
-}
-
 export default function Part2() {
-  const maxWords = 225;              // ← updated limit here
   const { answers, updateAnswer } = useContext(AnswersContext);
-  const editorRef = useRef(null);
+  const maxWords = 45;
 
-  // Initialize word count from context
-  const [wordCount, setWordCount] = useState(() => {
-    const html = answers[2] || '';
-    return countWords(stripHtml(html));
-  });
+  const ref = useRef(null);
+  const [wordCount, setWordCount] = useState(() =>
+    countWords(stripHtml(answers[2] || ''))
+  );
 
   const [activeFormats, setActiveFormats] = useState({
     bold: false,
@@ -34,108 +19,101 @@ export default function Part2() {
     underline: false,
     strikeThrough: false,
   });
-  const [bookmarked, setBookmarked] = useState(false);
 
-  // Restore saved HTML on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const node = editorRef.current;
+  // Helpers
+  function stripHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.innerText;
+  }
+
+  function countWords(str) {
+    const m = str.trim().match(/\S+/g);
+    return m ? m.length : 0;
+  }
+
+  // Load any saved answer only once on mount
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+    const node = ref.current;
     if (node && answers[2]) {
       node.innerHTML = answers[2];
+      setWordCount(countWords(stripHtml(answers[2])));
     }
-}, []);
+  }, []);
 
-  // Update word-count & persist HTML
-  const handleInput = () => {
-    const node = editorRef.current;
+  // Handle typing/paste
+  function handleInput() {
+    const node = ref.current;
     const plain = node.innerText;
+    const html = node.innerHTML;
     const wc = countWords(plain);
     setWordCount(wc);
-    updateAnswer(2, 0, node.innerHTML);
-  };
+    updateAnswer(2, 0, html);
+  }
 
-  // Insert tab instead of losing focus
-  const handleKeyDown = (e) => {
+  // Insert a tab on Tab key
+  function handleKeyDown(e) {
     if (e.key === 'Tab') {
       e.preventDefault();
       document.execCommand('insertText', false, '\t');
       handleInput();
     }
-  };
+  }
 
-  // Toggle bookmark
-  const toggleBookmark = () => {
-    setBookmarked((b) => !b);
-  };
-
-  // Apply a formatting command
-  const formatText = (cmd) => {
-    const node = editorRef.current;
+  // Formatting commands
+  function formatText(cmd) {
+    const node = ref.current;
     if (!node) return;
     node.focus();
     document.execCommand(cmd, false, null);
     handleInput();
     updateActiveFormats();
-  };
+  }
 
-  // Refresh which formatting buttons are active
-  const updateActiveFormats = () => {
+  function updateActiveFormats() {
     const cmds = {
       bold: 'bold',
       italic: 'italic',
       underline: 'underline',
       strikeThrough: 'strikeThrough',
     };
-    setActiveFormats((af) => {
-      const next = {};
+    setActiveFormats((prev) => {
+      const next = { ...prev };
       Object.entries(cmds).forEach(([key, command]) => {
         next[key] = document.queryCommandState(command);
       });
       return next;
     });
-  };
+  }
 
-  // Watch selection changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Keep toolbar state in sync with selection
   useEffect(() => {
     const handler = () => {
-      const sel = document.getSelection();
-      if (!sel?.anchorNode) return;
-      if (editorRef.current.contains(sel.anchorNode)) {
+      if (ref.current.contains(document.getSelection().anchorNode)) {
         updateActiveFormats();
       }
     };
     document.addEventListener('selectionchange', handler);
     return () => document.removeEventListener('selectionchange', handler);
-}, []);
+  }, []);
 
   const limitReached = wordCount >= maxWords;
 
   return (
     <div className={styles.partContainer}>
-      <h2 className={styles.heading}>Part 2: Hotel Complaint Email</h2>
+      <h2 className={styles.heading}>Writing</h2>
+      <h3 className={styles.heading}>Question 2 of 4</h3>
       <p className={styles.prompt}>
-        You recently stayed at a hotel, but your experience was disappointing.
-        Write an email to the manager including the following points.
-        You should write 120–150 words.
+        You are a new member of the Music Club. Fill in the form. Write in
+        sentences. Use 20–30 words. Recommended time: 7 minutes.
       </p>
 
-      <ul className={styles.notes}>
-        <li>Room smaller than expected – no window</li>
-        <li>No hot water on second day</li>
-        <li>Staff didn’t apologise – felt ignored</li>
-      </ul>
-
-      <div className={styles.editorBlock}>
-        <button
-          className={`${styles.bookmarkButton} ${
-            bookmarked ? styles.bookmarked : ''
-          }`}
-          onClick={toggleBookmark}
-          aria-label="Toggle bookmark"
-        >
-          🔖
-        </button>
+      <div className={styles.questionBlock}>
+        <p className={styles.text}>
+          Please tell us about the music you like and when you usually listen to
+          it.
+        </p>
 
         <div className={styles.toolbar}>
           <button
@@ -168,21 +146,21 @@ export default function Part2() {
           className={styles.editable}
           contentEditable
           dir="ltr"
-          data-placeholder="Type your email here…"
-          ref={editorRef}
+          data-placeholder="Type your answer here…"
+          ref={ref}
           onInput={handleInput}
           onKeyDown={handleKeyDown}
         />
 
-        <div
-          className={`${styles.wordCount} ${
-            limitReached ? styles.wordCountWarning : ''
-          }`}
-        >
-          {limitReached
-            ? `Word limit reached ${wordCount}/${maxWords}`
-            : `Words ${wordCount} / ${maxWords}`}
-        </div>
+<div
+  className={`${styles.wordCount} ${
+    limitReached ? styles.wordCountWarning : ''
+  }`}
+>
+  {limitReached
+    ? `Word limit reached ${wordCount}/${maxWords}`
+    : `Words ${wordCount} / ${maxWords}`}
+</div>
       </div>
     </div>
   );

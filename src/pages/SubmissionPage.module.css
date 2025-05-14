@@ -89,5 +89,14 @@
       page-break-after: auto;
     }
   }
+  /* Prevent sections and Q/A blocks from being split across pages */
+.section,
+.qaBlock {
+  /* for modern browsers and html2pdf css mode */
+  break-inside: avoid-page;
+
+  /* legacy */
+  page-break-inside: avoid;
+}
   
   

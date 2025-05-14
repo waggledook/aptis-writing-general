@@ -6,17 +6,17 @@ export default function OpeningPage() {
   const navigate = useNavigate();
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Aptis Advanced Practice Test</h1>
+      <h1 className={styles.title}>Aptis General Practice Test</h1>
       <p className={styles.subtitle}>Writing</p>
 
       <div className={styles.infoRow}>
         <div>
           <p className={styles.label}>Number of Questions</p>
-          <p className={styles.value}>3</p>
+          <p className={styles.value}>4</p>
         </div>
         <div>
           <p className={styles.label}>Time Allowed</p>
-          <p className={styles.value}>45 min</p>
+          <p className={styles.value}>50 min</p>
         </div>
       </div>
 
