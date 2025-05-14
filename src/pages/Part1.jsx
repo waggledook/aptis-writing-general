@@ -1,11 +1,9 @@
 // src/pages/Part1.jsx
 import React, { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styles from './Part1.module.css';
 import { AnswersContext } from '../context/AnswersContext';
 
 export default function Part1() {
-  const navigate = useNavigate();
   const { answers, updateAnswer } = useContext(AnswersContext);
 
   const questions = [
