@@ -1,18 +1,11 @@
-// src/components/Layout.jsx
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { TimerContext } from '../context/TimerContext';
 import { AnswersContext } from '../context/AnswersContext';
 import { saveSubmission } from '../services/submissions';
+import { DRAFT_KEY, stripHtmlToText } from '../utils/answerContent';
+import { clearExamTimer, EXAM_DURATION_SECONDS } from '../utils/timer';
 import styles from './Layout.module.css';
-
-function stripHtml(html) {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.innerText;
-}
-
-const TOTAL_SECONDS = 50 * 60;
 
 export default function Layout() {
   const { timeLeft } = useContext(TimerContext);
@@ -23,6 +16,9 @@ export default function Layout() {
   const [showTimeUpModal, setShowTimeUpModal] = useState(false);
   const [timeUpHandled, setTimeUpHandled] = useState(false);
   const [examSubmitted, setExamSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitInFlightRef = useRef(false);
 
   const nav = useNavigate();
   const { pathname } = useLocation();
@@ -37,7 +33,7 @@ export default function Layout() {
   // Progress bar percentage
   const percent = Math.max(
     0,
-    Math.min(100, (timeLeft / TOTAL_SECONDS) * 100)
+    Math.min(100, (timeLeft / EXAM_DURATION_SECONDS) * 100)
   );
 
   // Determine Next path
@@ -54,6 +50,10 @@ export default function Layout() {
 
   // Handle Next button
   const handleNext = () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (nextPath === '/review') {
       setShowReview(true);
     } else if (nextPath) {
@@ -61,37 +61,55 @@ export default function Layout() {
     }
   };
 
-  // Time-up effect
+  const submitExam = useCallback(async () => {
+    if (submitInFlightRef.current || examSubmitted) {
+      return;
+    }
+
+    submitInFlightRef.current = true;
+    setIsSubmitting(true);
+    setSubmissionError('');
+
+    try {
+      const newId = await saveSubmission(answers);
+      localStorage.removeItem(DRAFT_KEY);
+      clearExamTimer();
+      setExamSubmitted(true);
+      nav(`/submitted/${newId}`, { replace: true });
+    } catch (err) {
+      submitInFlightRef.current = false;
+      setIsSubmitting(false);
+      setSubmissionError(err.message || 'Unknown submission error');
+    }
+  }, [answers, examSubmitted, nav]);
+
   useEffect(() => {
     if (timeLeft <= 0 && !timeUpHandled) {
       setTimeUpHandled(true);
       setShowTimeUpModal(true);
+      setShowSubmitConfirm(false);
+      setShowReview(false);
+      submitExam();
     }
-  }, [timeLeft, timeUpHandled]);
+  }, [submitExam, timeLeft, timeUpHandled]);
 
-  // Compute whether exam is still active
-  const isExamActive = !examSubmitted;
+  const isExamActive = !examSubmitted && !pathname.startsWith('/submitted/');
 
-  // Compute part status for review modal
   const partStatus = {
-    // Part 1: array of 5 short answers
     1:
       Array.isArray(answers[1]) &&
-      answers[1].some((html) => stripHtml(html).trim() !== '')
+      answers[1].some((html) => stripHtmlToText(html).trim() !== '')
         ? 'Attempted'
         : 'Not Attempted',
-    // Part 2: single string
-    2: (answers[2] || '').trim() ? 'Attempted' : 'Not Attempted',
-    // Part 3: array of 3 chat replies
+    2: stripHtmlToText(answers[2] || '').trim() ? 'Attempted' : 'Not Attempted',
     3:
       Array.isArray(answers[3]) &&
-      answers[3].some((html) => stripHtml(html).trim() !== '')
+      answers[3].some((html) => stripHtmlToText(html).trim() !== '')
       ? 'Attempted'
       : 'Not Attempted',
-    // Part 4: array of 2 emails
-    4: 
+    4:
       Array.isArray(answers[4]) &&
-      answers[4].some((html) => stripHtml(html).trim() !== '')
+      answers[4].some((html) => stripHtmlToText(html).trim() !== '')
       ? 'Attempted'
       : 'Not Attempted',
   };
@@ -122,12 +140,14 @@ export default function Layout() {
         <footer className={styles.bottomBar}>
           <button
             className={styles.menuButton}
+            disabled={isSubmitting}
             onClick={() => setMenuOpen((open) => !open)}
           >
             ☰
           </button>
           <button
             className={styles.nextButton}
+            disabled={isSubmitting}
             onClick={handleNext}
           >
             Next →
@@ -150,6 +170,7 @@ export default function Layout() {
                 <li key={n}>
                   <button
                     onClick={() => {
+                      if (isSubmitting) return;
                       nav(`/part/${n}`);
                       setMenuOpen(false);
                     }}
@@ -183,6 +204,7 @@ export default function Layout() {
                   <button
                     className={styles.partButton}
                     onClick={() => {
+                      if (isSubmitting) return;
                       nav(`/part/${n}`);
                       setShowReview(false);
                     }}
@@ -199,6 +221,7 @@ export default function Layout() {
               <button
                 className={styles.reviewButton}
                 onClick={() => {
+                  if (isSubmitting) return;
                   nav('/part/1');
                   setShowReview(false);
                 }}
@@ -207,6 +230,7 @@ export default function Layout() {
               </button>
               <button
                 className={styles.submitButton}
+                disabled={isSubmitting}
                 onClick={() => {
                   setShowReview(false);
                   setShowSubmitConfirm(true);
@@ -236,31 +260,25 @@ export default function Layout() {
             <div className={styles.confirmFooter}>
               <button
                 className={styles.cancelButton}
+                disabled={isSubmitting}
                 onClick={() => setShowSubmitConfirm(false)}
               >
                 Cancel
               </button>
               <button
                 className={styles.submitConfirmButton}
-                onClick={async () => {
+                disabled={isSubmitting}
+                onClick={() => {
                   setShowSubmitConfirm(false);
-                  // clear the auto-saved draft
-                  localStorage.removeItem('aptis-writing-draft');
-                  try {
-                    console.log('Submitting answers...', answers);
-                    const newId = await saveSubmission(answers);
-                    console.log('Received submission ID:', newId);
-                    setExamSubmitted(true);
-                    nav(`/submitted/${newId}`, { replace: true });
-                  } catch (err) {
-                    console.error('Error submitting test:', err);
-                    alert('There was a problem submitting your test:\n' + err.message);
-                  }
+                  submitExam();
                 }}
               >
-                Submit test
+                {isSubmitting ? 'Submitting...' : 'Submit test'}
               </button>
             </div>
+            {submissionError && (
+              <p className={styles.errorText}>Submission failed: {submissionError}</p>
+            )}
           </div>
         </div>
       )}
@@ -277,22 +295,31 @@ export default function Layout() {
           >
             <h3 className={styles.modalHeader}>Time’s up!</h3>
             <p className={styles.modalSubheader}>
-              Your time has run out—your exam will now be automatically submitted.
+              {submissionError
+                ? 'We could not submit automatically. Please try again.'
+                : 'Your time has run out. We are submitting your exam now.'}
             </p>
             <div className={styles.confirmFooter}>
-              <button
-                className={styles.submitConfirmButton}
-                onClick={async () => {
-                  setShowTimeUpModal(false);
-                  localStorage.removeItem('aptis-writing-draft');
-                  const newId = await saveSubmission(answers);
-                  setExamSubmitted(true);
-                  nav(`/submitted/${newId}`, { replace: true });
-                }}
-              >
-                OK
-              </button>
+              {submissionError ? (
+                <button
+                  className={styles.submitConfirmButton}
+                  disabled={isSubmitting}
+                  onClick={submitExam}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Try again'}
+                </button>
+              ) : (
+                <button
+                  className={styles.submitConfirmButton}
+                  disabled
+                >
+                  Submitting...
+                </button>
+              )}
             </div>
+            {submissionError && (
+              <p className={styles.errorText}>Submission failed: {submissionError}</p>
+            )}
           </div>
         </div>
       )}

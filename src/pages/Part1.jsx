@@ -43,6 +43,10 @@ export default function Part1() {
             className={styles.answerInput}
             placeholder="Type your answer here"
             value={localAnswers[i] || ''}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             onChange={(e) => handleChange(i, e)}
           />
         </div>

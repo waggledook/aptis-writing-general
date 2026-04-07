@@ -6,7 +6,7 @@ export default function ReviewPage() {
     <div style={{ padding: '1rem' }}>
       <h2>Review Your Answers</h2>
       <p>
-        This is your “final screen” where you can see all three parts before submitting.
+        Use the review dialog to jump back to any part before you submit your test.
       </p>
     </div>
   );

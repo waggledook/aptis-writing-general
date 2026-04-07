@@ -1,20 +1,26 @@
-// src/pages/SubmissionPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import html2pdf from 'html2pdf.js/dist/html2pdf.min.js';
 import { loadSubmission } from '../services/submissions';
+import {
+  downloadSubmissionDocx,
+  getNormalizedSubmission,
+  PART1_QUESTIONS,
+  PART3_QUESTIONS,
+  PART4_SOURCE_EMAIL
+} from '../utils/submissionDocument';
 import styles from './SubmissionPage.module.css';
 
 export default function SubmissionPage() {
   const { id } = useParams();
   const containerRef = useRef();
   const [loaded, setLoaded] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!id) return;
     loadSubmission(id)
       .then((data) => setLoaded(data))
-      .catch(() => alert('Could not load that submission.'));
+      .catch((err) => setError(err.message || 'Could not load that submission.'));
   }, [id]);
 
   const copyLink = () => {
@@ -23,52 +29,45 @@ export default function SubmissionPage() {
       .catch(() => alert('Copy failed'));
   };
 
-  const handleDownloadPDF = () => {
-    const opt = {
-      margin:       [0.5,0.5,0.5,0.5],
-      filename:     'aptis-general-writing.pdf',
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: {
-        mode:  ['css','legacy'],      // first try your CSS rules, fallback to html2pdf's legacy logic
-        avoid: ['.section', '.qaBlock'] // never split these selectors across pages
-      }
-    };
-  
-    html2pdf()
-      .set(opt)
-      .from(containerRef.current)
-      .save();
+  const handlePrint = () => {
+    window.print();
   };
+
+  if (error) {
+    return <div className={styles.page}>{error}</div>;
+  }
 
   if (!loaded) {
     return <div className={styles.page}>Loading submission…</div>;
   }
 
-  // Destructure with safe defaults
-  const part1 = Array.isArray(loaded[1]) ? loaded[1] : Array(5).fill('');
-  const part2 = loaded[2] || '';
-  const part3 = Array.isArray(loaded[3]) ? loaded[3] : Array(3).fill('');
-  const part4 = Array.isArray(loaded[4]) ? loaded[4] : ['', ''];
-
-  // Static prompts
-  const p1Qs = [
-    'What languages do you speak?',
-    'Where do you work or study?',
-    'What’s your favourite kind of food?',
-    'What sports do you do?',
-    'What time do you get up?'
-  ];
+  const submission = getNormalizedSubmission(loaded);
 
   return (
     <div className={styles.page}>
-      <h1>Aptis General Practice Test – Writing</h1>
+      <div className={styles.toolbar} aria-label="Submission export tools">
+        <button type="button" onClick={copyLink}>Copy link</button>
+        <button type="button" onClick={handlePrint}>Print / Save as PDF</button>
+        <button
+          type="button"
+          onClick={() => downloadSubmissionDocx({ submissionId: id, submission })}
+        >
+          Export .docx
+        </button>
+      </div>
+
       <div className={styles.toolbar}>
-        <button onClick={copyLink}>Copy link</button>
-        <button onClick={handleDownloadPDF}>Download PDF</button>
+        <span className={styles.helperText}>
+          Use browser print for a selectable PDF, or export a Word document for editing.
+        </span>
       </div>
 
       <div ref={containerRef} className={styles.content}>
+        <header className={styles.documentHeader}>
+          <h1>Aptis General Practice Test - Writing</h1>
+          <p className={styles.submissionMeta}>Submission ID: {id}</p>
+        </header>
+
         {/* Instructions */}
         <section className={styles.section}>
           <h2>Writing</h2>
@@ -89,12 +88,12 @@ export default function SubmissionPage() {
             You want to join a music club. You have 5 messages from a member of the club.
             Write short answers (1–5 words) to each message. Recommended time: 3 minutes.
           </p>
-          {p1Qs.map((q, i) => (
+          {PART1_QUESTIONS.map((q, i) => (
             <div key={i} className={styles.qaBlock}>
               <p className={styles.question}>{q}</p>
               <div className={styles.answer}>
-                {part1[i]?.trim() ? (
-                  <span>{part1[i]}</span>
+                {submission.part1[i]?.trim() ? (
+                  <span>{submission.part1[i]}</span>
                 ) : (
                   <em>(no answer)</em>
                 )}
@@ -115,8 +114,8 @@ export default function SubmissionPage() {
           </p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
-              {part2.trim() ? (
-                <div dangerouslySetInnerHTML={{ __html: part2 }} />
+              {submission.part2.trim() ? (
+                <div dangerouslySetInnerHTML={{ __html: submission.part2 }} />
               ) : (
                 <em>(no answer)</em>
               )}
@@ -132,18 +131,14 @@ export default function SubmissionPage() {
             Reply to their questions. Write in sentences. Use 30–40 words per answer.
             Recommended time: 10 minutes.
           </p>
-          {[
-            ['Jasmine', 'Hi and welcome! Do you prefer listening to music or making it?'],
-            ['Leo', 'What was the best live music experience you’ve had?'],
-            ['Amira', "We're planning a playlist for the next club meeting. Which songs or artists would you recommend, and why?"]
-          ].map(([speaker, text], i) => (
+          {PART3_QUESTIONS.map(([speaker, text], i) => (
             <div key={i} className={styles.qaBlock}>
               <p className={styles.question}>
                 <strong>{speaker}:</strong> {text}
               </p>
               <div className={styles.answer}>
-                {part3[i]?.trim() ? (
-                  <div dangerouslySetInnerHTML={{ __html: part3[i] }} />
+                {submission.part3[i]?.trim() ? (
+                  <div dangerouslySetInnerHTML={{ __html: submission.part3[i] }} />
                 ) : (
                   <em>(no answer)</em>
                 )}
@@ -159,19 +154,24 @@ export default function SubmissionPage() {
             You are a member of a music club. You have received this email from the club:
           </p>
           <blockquote className={styles.emailBlock}>
-            Dear Member,<br/><br/>
-            We are writing to let you know that next week’s music club meeting has been changed. Unfortunately, the guest speaker — local musician and music teacher Ms Rachel Dean — is no longer available due to illness.<br/><br/>
-            Instead, we will show a documentary about her life and career, and there will be a short discussion afterwards. The event will still take place at the usual time, and we hope you will enjoy the new format.<br/><br/>
-            If you have any suggestions or questions, please contact the club organiser.<br/><br/>
-            Kind regards,<br/>
-            The Music Club Team
+            {PART4_SOURCE_EMAIL.map((line, index) => (
+              <React.Fragment key={line}>
+                {line}
+                {index < PART4_SOURCE_EMAIL.length - 1 && (
+                  <>
+                    <br />
+                    <br />
+                  </>
+                )}
+              </React.Fragment>
+            ))}
           </blockquote>
 
           <p><strong>1)</strong> Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.</p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
-              {part4[0]?.trim() ? (
-                <div dangerouslySetInnerHTML={{ __html: part4[0] }} />
+              {submission.part4[0]?.trim() ? (
+                <div dangerouslySetInnerHTML={{ __html: submission.part4[0] }} />
               ) : (
                 <em>(no answer)</em>
               )}
@@ -181,8 +181,8 @@ export default function SubmissionPage() {
           <p><strong>2)</strong> Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120–150 words. Recommended time: 20 minutes.</p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
-              {part4[1]?.trim() ? (
-                <div dangerouslySetInnerHTML={{ __html: part4[1] }} />
+              {submission.part4[1]?.trim() ? (
+                <div dangerouslySetInnerHTML={{ __html: submission.part4[1] }} />
               ) : (
                 <em>(no answer)</em>
               )}

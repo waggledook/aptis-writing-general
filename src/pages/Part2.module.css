@@ -1,90 +1,29 @@
-/* src/pages/Part2.module.css */
-.heading {
-    margin: 0 0 0.25rem 0;
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-  }
-
-.subheading {
-    font-size: 1.25rem;
-    font-weight: normal;
-    margin-bottom: 1rem;
-  }
-
 .partContainer {
-    padding: 1rem;
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  
-  .heading {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-  }
-  
-  .prompt {
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-  }
-  
-  .questionBlock {
-    background: #fafafa;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .text {
-    margin-bottom: 0.5rem;
-    line-height: 1.5;
-  }
-  
-  .toolbar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .toolbar button {
-    background: #eee;
-    border: 1px solid #ccc;
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .toolbar button.active {
-    background: #ddd;
-    border-color: #888;
-  }
-  
-  .editable {
-    min-height: 100px;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    overflow-y: auto;
-    direction: ltr !important;
-    unicode-bidi: embed !important;
-  }
-  
-  .editable:empty:before {
-    content: attr(data-placeholder);
-    color: #999;
-  }
-  
-  .wordCount {
-    text-align: right;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #555;
-  }
-  
-  .wordCountWarning {
-    color: red;
-    font-weight: bold;
-  }
-  
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.prompt {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.questionBlock {
+  background: #fafafa;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.text {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
