@@ -1,15 +1,27 @@
-# Aptis Writing Mock – General Format
+# Aptis Writing Mock - General Format
 
-A simple React app to simulate the **Aptis General** writing test.  
-Supports two tasks:
-1. **Task 1**: Formal or informal letter (50–60 words, 10 minutes)  
-2. **Task 2**: Continuous writing (100–120 words, 20 minutes)
+A simple React app to simulate the Aptis General writing test.
 
----
+## Installation
 
-## 🛠️ Installation
-
-1. **Clone** this repo  
+1. Clone the repo.
    ```bash
    git clone https://github.com/<your-username>/aptis-writing-general.git
    cd aptis-writing-general
+   ```
+2. Create your local env file.
+   ```bash
+   cp .env.example .env
+   ```
+3. Add your Firebase web config values to `.env`.
+4. Install dependencies and start the app.
+   ```bash
+   npm install
+   npm start
+   ```
+
+## Scripts
+
+- `npm start`
+- `npm test`
+- `npm run build`
