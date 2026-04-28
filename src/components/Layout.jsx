@@ -10,7 +10,7 @@ import { clearExamTimer, EXAM_DURATION_SECONDS } from '../utils/timer';
 import styles from './Layout.module.css';
 
 export default function Layout() {
-  const { timeLeft } = useContext(TimerContext);
+  const { timeLeft, timerRunning, startTimer } = useContext(TimerContext);
   const { answers } = useContext(AnswersContext);
   const mock = useWritingMock();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,7 +58,10 @@ export default function Layout() {
       return;
     }
 
-    if (nextPath === `/mock/${mock.id}/review`) {
+    if (pathname === `/mock/${mock.id}/instructions` && nextPath) {
+      startTimer();
+      nav(nextPath);
+    } else if (nextPath === `/mock/${mock.id}/review`) {
       setShowReview(true);
     } else if (nextPath) {
       nav(nextPath);
@@ -91,14 +94,14 @@ export default function Layout() {
   }, [answers, examSubmitted, mock.id, nav]);
 
   useEffect(() => {
-    if (timeLeft <= 0 && !timeUpHandled) {
+    if (timerRunning && timeLeft <= 0 && !timeUpHandled) {
       setTimeUpHandled(true);
       setShowTimeUpModal(true);
       setShowSubmitConfirm(false);
       setShowReview(false);
       submitExam();
     }
-  }, [submitExam, timeLeft, timeUpHandled]);
+  }, [submitExam, timerRunning, timeLeft, timeUpHandled]);
 
   const isExamActive = !examSubmitted && !pathname.startsWith('/submitted/');
 

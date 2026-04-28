@@ -41,9 +41,7 @@
 
 .mockButton {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.35rem 1rem;
-  align-items: center;
+  gap: 0.65rem;
   padding: 1rem;
   border: 1px solid #d7deea;
   border-radius: 8px;
@@ -63,18 +61,15 @@
   font-weight: 700;
 }
 
-.mockDescription {
-  color: #526075;
-  grid-column: 1 / -1;
-  line-height: 1.4;
-}
-
 .openTag,
 .lockedTag {
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
   padding: 0.25rem 0.55rem;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .openTag {

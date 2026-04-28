@@ -1,18 +1,36 @@
 import React, { createContext, useState, useEffect } from 'react';
 import {
-  getOrCreateExamEndTime,
-  getRemainingSeconds
+  EXAM_DURATION_SECONDS,
+  getRemainingSeconds,
+  getStoredEndTime,
+  resetExamTimer
 } from '../utils/timer';
 
-export const TimerContext = createContext();
+export const TimerContext = createContext({
+  timeLeft: EXAM_DURATION_SECONDS,
+  timerRunning: false,
+  startTimer: () => {}
+});
 
 export function TimerProvider({ children }) {
-  const [timeLeft, setTimeLeft] = useState(() =>
-    getRemainingSeconds(getOrCreateExamEndTime())
-  );
+  const [endTime, setEndTime] = useState(() => getStoredEndTime());
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const storedEndTime = getStoredEndTime();
+    return storedEndTime ? getRemainingSeconds(storedEndTime) : EXAM_DURATION_SECONDS;
+  });
+
+  const startTimer = () => {
+    const nextEndTime = endTime || resetExamTimer();
+    setEndTime(nextEndTime);
+    setTimeLeft(getRemainingSeconds(nextEndTime));
+  };
 
   useEffect(() => {
-    const endTime = getOrCreateExamEndTime();
+    if (!endTime) {
+      setTimeLeft(EXAM_DURATION_SECONDS);
+      return undefined;
+    }
+
     const tick = () => {
       const secs = getRemainingSeconds(endTime);
       setTimeLeft(secs);
@@ -23,10 +41,10 @@ export function TimerProvider({ children }) {
     const intervalId = setInterval(tick, 1000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [endTime]);
 
   return (
-    <TimerContext.Provider value={{ timeLeft }}>
+    <TimerContext.Provider value={{ timeLeft, timerRunning: !!endTime, startTimer }}>
       {children}
     </TimerContext.Provider>
   );

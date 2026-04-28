@@ -1,11 +1,14 @@
 // src/pages/InstructionsPage.jsx
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
 import { useWritingMock } from '../context/MockContext';
+import { TimerContext } from '../context/TimerContext';
 import styles from './InstructionsPage.module.css';
 
 export default function InstructionsPage() {
   const navigate = useNavigate();
   const mock = useWritingMock();
+  const { startTimer } = useContext(TimerContext);
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>Aptis General Writing Instructions</h2>
@@ -27,7 +30,10 @@ export default function InstructionsPage() {
       <div className={styles.footer}>
         <button
           className={styles.nextButton}
-          onClick={() => navigate(`/mock/${mock.id}/part/1`)}
+          onClick={() => {
+            startTimer();
+            navigate(`/mock/${mock.id}/part/1`);
+          }}
         >
           Next
         </button>

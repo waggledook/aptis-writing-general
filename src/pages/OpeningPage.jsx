@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import styles from './OpeningPage.module.css';
 import { useAuthUser } from '../components/AuthGate';
 import { WRITING_MOCKS } from '../data/mocks';
-import { resetExamTimer } from '../utils/timer';
+import { clearExamTimer } from '../utils/timer';
 
 export default function OpeningPage() {
   const navigate = useNavigate();
   const { user } = useAuthUser();
 
   const startMock = (mock) => {
-    resetExamTimer();
+    clearExamTimer();
     if (mock.requiresAuth && !user) {
       navigate(`/mock/${mock.id}/sign-in`, {
         state: { from: { pathname: `/mock/${mock.id}/instructions` } }
@@ -44,7 +44,6 @@ export default function OpeningPage() {
             onClick={() => startMock(mock)}
           >
             <span className={styles.mockTitle}>{mock.menuTitle}</span>
-            <span className={styles.mockDescription}>{mock.menuDescription}</span>
             <span className={mock.requiresAuth ? styles.lockedTag : styles.openTag}>
               {mock.requiresAuth ? 'Sign in required' : 'Open'}
             </span>
