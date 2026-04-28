@@ -33,9 +33,57 @@
     font-size: 1.5rem;
   }
   
-  .startButton {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-    cursor: pointer;
-  }
+.mockList {
+  width: min(100%, 760px);
+  display: grid;
+  gap: 0.85rem;
+}
+
+.mockButton {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #d7deea;
+  border-radius: 8px;
+  background: #fff;
+  color: #142033;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(20, 32, 51, 0.08);
+}
+
+.mockButton:hover {
+  border-color: #4c7ef3;
+}
+
+.mockTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.mockDescription {
+  color: #526075;
+  grid-column: 1 / -1;
+  line-height: 1.4;
+}
+
+.openTag,
+.lockedTag {
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+}
+
+.openTag {
+  background: #e7f7ed;
+  color: #17633a;
+}
+
+.lockedTag {
+  background: #fff1d6;
+  color: #8a4d00;
+}
   

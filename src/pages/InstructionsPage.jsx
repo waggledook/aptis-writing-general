@@ -1,12 +1,15 @@
 // src/pages/InstructionsPage.jsx
 import { useNavigate } from 'react-router-dom';
+import { useWritingMock } from '../context/MockContext';
 import styles from './InstructionsPage.module.css';
 
 export default function InstructionsPage() {
   const navigate = useNavigate();
+  const mock = useWritingMock();
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>Aptis General Writing Instructions</h2>
+      <p>{mock.menuTitle}</p>
 
       <p>Writing</p>
       <p>This test has four parts and takes up to 50 minutes.</p>
@@ -24,7 +27,7 @@ export default function InstructionsPage() {
       <div className={styles.footer}>
         <button
           className={styles.nextButton}
-          onClick={() => navigate('/part/1')}
+          onClick={() => navigate(`/mock/${mock.id}/part/1`)}
         >
           Next
         </button>

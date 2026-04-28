@@ -1,5 +1,9 @@
 export const DRAFT_KEY = 'aptis-writing-draft';
 
+export function getDraftKey(mockId) {
+  return mockId ? `${DRAFT_KEY}:${mockId}` : DRAFT_KEY;
+}
+
 export const EMPTY_ANSWERS = {
   1: Array(5).fill(''),
   2: '',

@@ -1,35 +1,19 @@
 import React, { useContext } from 'react';
 import { AnswersContext } from '../context/AnswersContext';
+import { useWritingMock } from '../context/MockContext';
 import RichTextAnswerEditor from '../components/RichTextAnswerEditor';
 import styles from './Part3.module.css';
 
-const questions = [
-  {
-    speaker: 'Jasmine',
-    text: 'Hi and welcome! Do you prefer listening to music or making it?'
-  },
-  {
-    speaker: 'Leo',
-    text: 'What was the best live music experience you’ve had?'
-  },
-  {
-    speaker: 'Amira',
-    text: "We're planning a playlist for the next club meeting. Which songs or artists would you recommend, and why?"
-  }
-];
-
 export default function Part3() {
   const { answers, updateAnswer } = useContext(AnswersContext);
+  const mock = useWritingMock();
+  const questions = mock.part3.questions;
 
   return (
     <div className={styles.partContainer}>
       <h2 className={styles.heading}>Writing</h2>
       <h3 className={styles.heading}>Question 3 of 4</h3>
-      <p className={styles.prompt}>
-        You are communicating with other members of the club in the chat room.
-        Reply to their questions. Write in sentences. Use 30–40 words per answer.
-        Recommended time: 10 minutes.
-      </p>
+      <p className={styles.prompt}>{mock.part3.prompt}</p>
 
       {questions.map((q, i) => {
         return (

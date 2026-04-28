@@ -17,8 +17,14 @@
     align-items: flex-end;
   }
   
-  .timerDisplay {
+.timerDisplay {
     text-align: right;
+  }
+.mockLabel {
+    color: #555;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 2px;
   }
   .timerValue {
     font-family: monospace;

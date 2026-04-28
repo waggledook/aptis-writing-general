@@ -2,17 +2,12 @@
 import React, { useContext } from 'react';
 import styles from './Part1.module.css';
 import { AnswersContext } from '../context/AnswersContext';
+import { useWritingMock } from '../context/MockContext';
 
 export default function Part1() {
   const { answers, updateAnswer } = useContext(AnswersContext);
-
-  const questions = [
-    'What languages do you speak?',
-    'Where do you work or study?',
-    'What’s your favourite kind of food?',
-    'What sports do you do?',
-    'What time do you get up?'
-  ];
+  const mock = useWritingMock();
+  const questions = mock.part1.questions;
 
   // pull the Part 1 array out of context
   const localAnswers = answers[1];
@@ -26,11 +21,7 @@ export default function Part1() {
     <div className={styles.partContainer}>
       <h2 className={styles.heading}>Writing</h2>
       <h3 className={styles.heading}>Question 1 of 4</h3>
-      <p className={styles.prompt}>
-        You want to join a music club. You have 5 messages from a member of the
-        club. Write short answers (1–5 words) to each message. Recommended time:
-        3 minutes.
-      </p>
+      <p className={styles.prompt}>{mock.part1.prompt}</p>
       <p className={styles.prompt}>
         <strong>Example</strong> How are you? I’m fine, thanks.
       </p>

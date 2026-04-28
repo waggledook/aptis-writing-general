@@ -2,14 +2,17 @@ import React, { useContext, useState, useEffect, useRef, useCallback } from 'rea
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { TimerContext } from '../context/TimerContext';
 import { AnswersContext } from '../context/AnswersContext';
+import { useWritingMock } from '../context/MockContext';
+import { auth, doSignOut } from '../firebase-config';
 import { saveSubmission } from '../services/submissions';
-import { DRAFT_KEY, stripHtmlToText } from '../utils/answerContent';
+import { getDraftKey, stripHtmlToText } from '../utils/answerContent';
 import { clearExamTimer, EXAM_DURATION_SECONDS } from '../utils/timer';
 import styles from './Layout.module.css';
 
 export default function Layout() {
   const { timeLeft } = useContext(TimerContext);
   const { answers } = useContext(AnswersContext);
+  const mock = useWritingMock();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
@@ -38,14 +41,15 @@ export default function Layout() {
 
   // Determine Next path
   let nextPath;
-  if (pathname === '/instructions') {
-    nextPath = '/part/1';
-  } else if (pathname.startsWith('/part/')) {
-    const partNum = parseInt(pathname.split('/')[2], 10);
+  if (pathname === `/mock/${mock.id}/instructions`) {
+    nextPath = `/mock/${mock.id}/part/1`;
+  } else if (pathname.includes('/part/')) {
+    const pathParts = pathname.split('/');
+    const partNum = parseInt(pathParts[pathParts.length - 1], 10);
     // now handles parts 1–4
     nextPath = partNum < 4
-      ? `/part/${partNum + 1}`
-      : '/review';
+      ? `/mock/${mock.id}/part/${partNum + 1}`
+      : `/mock/${mock.id}/review`;
   }
 
   // Handle Next button
@@ -54,7 +58,7 @@ export default function Layout() {
       return;
     }
 
-    if (nextPath === '/review') {
+    if (nextPath === `/mock/${mock.id}/review`) {
       setShowReview(true);
     } else if (nextPath) {
       nav(nextPath);
@@ -71,8 +75,11 @@ export default function Layout() {
     setSubmissionError('');
 
     try {
-      const newId = await saveSubmission(answers);
-      localStorage.removeItem(DRAFT_KEY);
+      const newId = await saveSubmission(answers, {
+        mockId: mock.id,
+        user: auth.currentUser
+      });
+      localStorage.removeItem(getDraftKey(mock.id));
       clearExamTimer();
       setExamSubmitted(true);
       nav(`/submitted/${newId}`, { replace: true });
@@ -81,7 +88,7 @@ export default function Layout() {
       setIsSubmitting(false);
       setSubmissionError(err.message || 'Unknown submission error');
     }
-  }, [answers, examSubmitted, nav]);
+  }, [answers, examSubmitted, mock.id, nav]);
 
   useEffect(() => {
     if (timeLeft <= 0 && !timeUpHandled) {
@@ -119,6 +126,7 @@ export default function Layout() {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.timerDisplay}>
+          <div className={styles.mockLabel}>{mock.title}</div>
           <div className={styles.timerValue}>{timerLabel}</div>
           <div className={styles.timerText}>Time remaining</div>
         </div>
@@ -171,7 +179,7 @@ export default function Layout() {
                   <button
                     onClick={() => {
                       if (isSubmitting) return;
-                      nav(`/part/${n}`);
+                      nav(`/mock/${mock.id}/part/${n}`);
                       setMenuOpen(false);
                     }}
                   >
@@ -179,6 +187,31 @@ export default function Layout() {
                   </button>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => {
+                    if (isSubmitting) return;
+                    nav('/');
+                    setMenuOpen(false);
+                  }}
+                >
+                  Mock menu
+                </button>
+              </li>
+              {auth.currentUser && (
+                <li>
+                  <button
+                    onClick={() => {
+                      if (isSubmitting) return;
+                      doSignOut();
+                      nav('/');
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </li>
+              )}
             </ul>
           </nav>
         </div>
@@ -205,7 +238,7 @@ export default function Layout() {
                     className={styles.partButton}
                     onClick={() => {
                       if (isSubmitting) return;
-                      nav(`/part/${n}`);
+                      nav(`/mock/${mock.id}/part/${n}`);
                       setShowReview(false);
                     }}
                   >
@@ -222,7 +255,7 @@ export default function Layout() {
                 className={styles.reviewButton}
                 onClick={() => {
                   if (isSubmitting) return;
-                  nav('/part/1');
+                  nav(`/mock/${mock.id}/part/1`);
                   setShowReview(false);
                 }}
               >

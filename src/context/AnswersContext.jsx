@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import {
-  DRAFT_KEY,
   EMPTY_ANSWERS,
+  getDraftKey,
   sanitizeRichTextHtml
 } from '../utils/answerContent';
 
@@ -20,11 +20,11 @@ export const AnswersContext = createContext({
   setAnswers: () => {}
 });
 
-export function AnswersProvider({ children }) {
+export function AnswersProvider({ children, mockId }) {
   const [answers, setAnswers] = useState(() => {
     const defaults = EMPTY_ANSWERS;
     try {
-      const json = localStorage.getItem(DRAFT_KEY);
+      const json = localStorage.getItem(getDraftKey(mockId));
       if (!json) return defaults;
       const parsed = JSON.parse(json);
       return {
@@ -41,11 +41,11 @@ export function AnswersProvider({ children }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(answers));
+      localStorage.setItem(getDraftKey(mockId), JSON.stringify(answers));
     } catch (err) {
       console.warn('Could not save draft:', err);
     }
-  }, [answers]);
+  }, [answers, mockId]);
 
   const updateAnswer = (part, idx, html) => {
     setAnswers((prev) => {

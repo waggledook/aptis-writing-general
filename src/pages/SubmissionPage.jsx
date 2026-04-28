@@ -3,11 +3,9 @@ import { useParams } from 'react-router-dom';
 import { loadSubmission } from '../services/submissions';
 import {
   downloadSubmissionDocx,
-  getNormalizedSubmission,
-  PART1_QUESTIONS,
-  PART3_QUESTIONS,
-  PART4_SOURCE_EMAIL
+  getNormalizedSubmission
 } from '../utils/submissionDocument';
+import { getWritingMock } from '../data/mocks';
 import styles from './SubmissionPage.module.css';
 
 export default function SubmissionPage() {
@@ -41,7 +39,10 @@ export default function SubmissionPage() {
     return <div className={styles.page}>Loading submission…</div>;
   }
 
-  const submission = getNormalizedSubmission(loaded);
+  const submission = getNormalizedSubmission(loaded.answers || loaded);
+  const mock = getWritingMock(loaded.mockId || loaded.answers?.__mockId);
+  const part4Prompt1 = mock.part4.prompts[0];
+  const part4Prompt2 = mock.part4.prompts[1];
 
   return (
     <div className={styles.page}>
@@ -50,7 +51,7 @@ export default function SubmissionPage() {
         <button type="button" onClick={handlePrint}>Print / Save as PDF</button>
         <button
           type="button"
-          onClick={() => downloadSubmissionDocx({ submissionId: id, submission })}
+          onClick={() => downloadSubmissionDocx({ submissionId: id, submission, mock })}
         >
           Export .docx
         </button>
@@ -65,6 +66,7 @@ export default function SubmissionPage() {
       <div ref={containerRef} className={styles.content}>
         <header className={styles.documentHeader}>
           <h1>Aptis General Practice Test - Writing</h1>
+          <p className={styles.submissionMeta}>{mock.menuTitle}</p>
           <p className={styles.submissionMeta}>Submission ID: {id}</p>
         </header>
 
@@ -85,10 +87,9 @@ export default function SubmissionPage() {
         <section className={styles.section}>
           <h3>Part One: Short answers</h3>
           <p>
-            You want to join a music club. You have 5 messages from a member of the club.
-            Write short answers (1–5 words) to each message. Recommended time: 3 minutes.
+            {mock.part1.prompt}
           </p>
-          {PART1_QUESTIONS.map((q, i) => (
+          {mock.part1.questions.map((q, i) => (
             <div key={i} className={styles.qaBlock}>
               <p className={styles.question}>{q}</p>
               <div className={styles.answer}>
@@ -106,11 +107,10 @@ export default function SubmissionPage() {
         <section className={styles.section}>
           <h3>Part Two: Form completion</h3>
           <p>
-            You are a new member of the Music Club. Fill in the form. Write in sentences.
-            Use 20–30 words. Recommended time: 7 minutes.
+            {mock.part2.prompt}
           </p>
           <p className={styles.promptText}>
-            Please tell us about the music you like and when you usually listen to it.
+            {mock.part2.question}
           </p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
@@ -127,14 +127,12 @@ export default function SubmissionPage() {
         <section className={styles.section}>
           <h3>Part Three: Chat room</h3>
           <p>
-            You are communicating with other members of the club in the chat room.
-            Reply to their questions. Write in sentences. Use 30–40 words per answer.
-            Recommended time: 10 minutes.
+            {mock.part3.prompt}
           </p>
-          {PART3_QUESTIONS.map(([speaker, text], i) => (
+          {mock.part3.questions.map((question, i) => (
             <div key={i} className={styles.qaBlock}>
               <p className={styles.question}>
-                <strong>{speaker}:</strong> {text}
+                <strong>{question.speaker}:</strong> {question.text}
               </p>
               <div className={styles.answer}>
                 {submission.part3[i]?.trim() ? (
@@ -151,13 +149,13 @@ export default function SubmissionPage() {
         <section className={styles.section}>
           <h3>Part Four: Emails</h3>
           <p>
-            You are a member of a music club. You have received this email from the club:
+            {mock.part4.intro}
           </p>
           <blockquote className={styles.emailBlock}>
-            {PART4_SOURCE_EMAIL.map((line, index) => (
+            {mock.part4.sourceEmail.map((line, index) => (
               <React.Fragment key={line}>
                 {line}
-                {index < PART4_SOURCE_EMAIL.length - 1 && (
+                {index < mock.part4.sourceEmail.length - 1 && (
                   <>
                     <br />
                     <br />
@@ -167,7 +165,7 @@ export default function SubmissionPage() {
             ))}
           </blockquote>
 
-          <p><strong>1)</strong> Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.</p>
+          <p><strong>1)</strong> {part4Prompt1.heading} {part4Prompt1.instructions}</p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
               {submission.part4[0]?.trim() ? (
@@ -178,7 +176,7 @@ export default function SubmissionPage() {
             </div>
           </div>
 
-          <p><strong>2)</strong> Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120–150 words. Recommended time: 20 minutes.</p>
+          <p><strong>2)</strong> {part4Prompt2.heading} {part4Prompt2.instructions}</p>
           <div className={styles.qaBlock}>
             <div className={styles.answer}>
               {submission.part4[1]?.trim() ? (

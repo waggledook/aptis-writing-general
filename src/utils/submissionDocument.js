@@ -6,29 +6,7 @@ import {
   TextRun
 } from 'docx';
 import { EMPTY_ANSWERS, sanitizeRichTextHtml } from './answerContent';
-
-export const PART1_QUESTIONS = [
-  'What languages do you speak?',
-  'Where do you work or study?',
-  'What’s your favourite kind of food?',
-  'What sports do you do?',
-  'What time do you get up?'
-];
-
-export const PART3_QUESTIONS = [
-  ['Jasmine', 'Hi and welcome! Do you prefer listening to music or making it?'],
-  ['Leo', 'What was the best live music experience you’ve had?'],
-  ['Amira', "We're planning a playlist for the next club meeting. Which songs or artists would you recommend, and why?"]
-];
-
-export const PART4_SOURCE_EMAIL = [
-  'Dear Member,',
-  'We are writing to let you know that next week’s music club meeting has been changed. Unfortunately, the guest speaker - local musician and music teacher Ms Rachel Dean - is no longer available due to illness.',
-  'Instead, we will show a documentary about her life and career, and there will be a short discussion afterwards. The event will still take place at the usual time, and we hope you will enjoy the new format.',
-  'If you have any suggestions or questions, please contact the club organiser.',
-  'Kind regards,',
-  'The Music Club Team'
-];
+import { DEFAULT_MOCK_ID, getWritingMock } from '../data/mocks';
 
 export function getNormalizedSubmission(loaded) {
   return {
@@ -128,7 +106,11 @@ function bodyParagraph(text, options = {}) {
   });
 }
 
-export async function downloadSubmissionDocx({ submissionId, submission }) {
+export async function downloadSubmissionDocx({ submissionId, submission, mock }) {
+  const writingMock = mock || getWritingMock(DEFAULT_MOCK_ID);
+  const part4Prompt1 = writingMock.part4.prompts[0];
+  const part4Prompt2 = writingMock.part4.prompts[1];
+
   const doc = new Document({
     styles: {
       default: {
@@ -182,7 +164,7 @@ export async function downloadSubmissionDocx({ submissionId, submission }) {
         properties: {},
         children: [
           new Paragraph({
-            text: 'Aptis General Practice Test - Writing',
+            text: `Aptis General Practice Test - Writing: ${writingMock.title}`,
             style: 'TitleStyle'
           }),
           bodyParagraph('The test has four parts and takes up to 50 minutes.'),
@@ -202,8 +184,8 @@ export async function downloadSubmissionDocx({ submissionId, submission }) {
             text: 'Part One: Short answers',
             style: 'HeadingOneStyle'
           }),
-          bodyParagraph('You want to join a music club. You have 5 messages from a member of the club. Write short answers (1-5 words) to each message. Recommended time: 3 minutes.'),
-          ...PART1_QUESTIONS.flatMap((question, index) => [
+          bodyParagraph(writingMock.part1.prompt),
+          ...writingMock.part1.questions.flatMap((question, index) => [
             questionParagraph(question),
             answerParagraph(submission.part1[index] || '')
           ]),
@@ -212,16 +194,16 @@ export async function downloadSubmissionDocx({ submissionId, submission }) {
             style: 'HeadingOneStyle',
             pageBreakBefore: true
           }),
-          bodyParagraph('You are a new member of the Music Club. Fill in the form. Write in sentences. Use 20-30 words. Recommended time: 7 minutes.'),
-          questionParagraph('Please tell us about the music you like and when you usually listen to it.'),
+          bodyParagraph(writingMock.part2.prompt),
+          questionParagraph(writingMock.part2.question),
           answerParagraph(submission.part2),
           new Paragraph({
             text: 'Part Three: Chat room',
             style: 'HeadingOneStyle'
           }),
-          bodyParagraph('You are communicating with other members of the club in the chat room. Reply to their questions. Write in sentences. Use 30-40 words per answer. Recommended time: 10 minutes.'),
-          ...PART3_QUESTIONS.flatMap(([speaker, text], index) => [
-            questionParagraph(`${speaker}: ${text}`),
+          bodyParagraph(writingMock.part3.prompt),
+          ...writingMock.part3.questions.flatMap((question, index) => [
+            questionParagraph(`${question.speaker}: ${question.text}`),
             answerParagraph(submission.part3[index] || '')
           ]),
           new Paragraph({
@@ -229,8 +211,8 @@ export async function downloadSubmissionDocx({ submissionId, submission }) {
             style: 'HeadingOneStyle',
             pageBreakBefore: true
           }),
-          bodyParagraph('You are a member of a music club. You have received this email from the club:'),
-          ...PART4_SOURCE_EMAIL.map((line) =>
+          bodyParagraph(writingMock.part4.intro),
+          ...writingMock.part4.sourceEmail.map((line) =>
             bodyParagraph(line, {
               indent: { left: 360 },
               border: {
@@ -238,9 +220,9 @@ export async function downloadSubmissionDocx({ submissionId, submission }) {
               }
             })
           ),
-          questionParagraph('1) Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.'),
+          questionParagraph(`1) ${part4Prompt1.heading} ${part4Prompt1.instructions}`),
           answerParagraph(submission.part4[0] || ''),
-          questionParagraph('2) Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120-150 words. Recommended time: 20 minutes.'),
+          questionParagraph(`2) ${part4Prompt2.heading} ${part4Prompt2.instructions}`),
           answerParagraph(submission.part4[1] || ''),
           new Paragraph({
             alignment: AlignmentType.RIGHT,
