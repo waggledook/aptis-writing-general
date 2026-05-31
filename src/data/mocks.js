@@ -135,6 +135,73 @@ export const WRITING_MOCKS = [
         }
       ]
     }
+  },
+  {
+    id: 'cooking-course',
+    title: 'Cooking Course',
+    menuTitle: 'Mock 3: Cooking Course',
+    menuDescription: 'Signed-in mock about changes to a practical cooking course.',
+    requiresAuth: true,
+    part1: {
+      prompt:
+        'You want to join a cooking course. You have 5 messages from a member of the course. Write short answers (1-5 words) to each message. Recommended time: 3 minutes.',
+      questions: [
+        'What do you usually have for breakfast?',
+        'How do you relax after work?',
+        'How often do you use your phone?',
+        "What's the weather like today?",
+        'What kind of movies do you like?'
+      ]
+    },
+    part2: {
+      prompt:
+        'You are a new member of the Cooking Course. Fill in the form. Write in sentences. Use 20-30 words. Recommended time: 7 minutes.',
+      question:
+        'What cooking skill do you most want to improve during the course?'
+    },
+    part3: {
+      prompt:
+        'You are chatting with other members of the cooking course in an online forum. Answer their messages. Write in sentences. Use 30-40 words per answer. Recommended time: 10 minutes.',
+      questions: [
+        {
+          speaker: 'Sofia',
+          text: "I'm really looking forward to learning some new dishes. What kind of food would you most like to learn how to cook?"
+        },
+        {
+          speaker: 'Daniel',
+          text: 'I think cooking is more enjoyable when people cook together. Do you prefer cooking alone or with other people?'
+        },
+        {
+          speaker: 'Priya',
+          text: 'Our teacher said we should practise at home between lessons. How much time do you think students should spend practising?'
+        }
+      ]
+    },
+    part4: {
+      intro:
+        'You are a member of a cooking course. You have received this email from the course organiser:',
+      sourceEmail: [
+        'Dear students,',
+        'We are writing to inform you that, from next month, the cooking course will change. Instead of cooking in class every week, students will watch demonstrations by the teacher and then practise the recipes at home.',
+        'This change will allow us to invite more students to the course and reduce the cost of ingredients. We believe the new format will be more efficient.',
+        'Please write to us with your views.',
+        'Course Administration'
+      ],
+      prompts: [
+        {
+          heading: 'Write an email to your friend.',
+          instructions:
+            'Write about your feelings and what you think about the change to the cooking course. Write about 50 words. Recommended time: 10 minutes.',
+          maxWords: 50
+        },
+        {
+          heading: 'Write an email to the course organiser.',
+          instructions:
+            'Write about your views on the new course format, explain whether you think it is a good idea, and suggest what the course should do. Write 120-150 words. Recommended time: 20 minutes.',
+          maxWords: 150
+        }
+      ]
+    }
   }
 ];
 
