@@ -16,6 +16,10 @@ import {
   signOut,
   updateProfile
 } from "firebase/auth";
+import {
+  getFunctions,
+  httpsCallable
+} from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCvpE87D16safq68oFB4fJKPyCURsc-mrU",
@@ -30,6 +34,9 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const functionsRegion = getFunctions(app, "europe-west1");
+export const callFunction = (name, payload) =>
+  httpsCallable(functionsRegion, name)(payload);
 
 export const doSignIn = (email, password) =>
   signInWithEmailAndPassword(auth, email, password);

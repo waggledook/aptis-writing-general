@@ -6,6 +6,11 @@ import {
   TextRun
 } from 'docx';
 import { EMPTY_ANSWERS, sanitizeRichTextHtml } from './answerContent';
+import {
+  buildFeedbackReport,
+  FEEDBACK_PARTS,
+  hasGeneratedFeedback
+} from './feedbackFormat';
 import { DEFAULT_MOCK_ID, getWritingMock } from '../data/mocks';
 
 export function getNormalizedSubmission(loaded) {
@@ -106,7 +111,129 @@ function bodyParagraph(text, options = {}) {
   });
 }
 
-export async function downloadSubmissionDocx({ submissionId, submission, mock }) {
+function headingParagraph(text, options = {}) {
+  return new Paragraph({
+    text,
+    style: 'HeadingOneStyle',
+    ...options
+  });
+}
+
+function bulletParagraph(text, options = {}) {
+  return new Paragraph({
+    text,
+    bullet: { level: 0 },
+    spacing: { after: 80 },
+    ...options
+  });
+}
+
+function noteParagraph(label, text) {
+  return bodyParagraph(`${label}: ${text}`);
+}
+
+function feedbackListParagraphs(title, items = []) {
+  if (!items.length) return [];
+  return [
+    new Paragraph({
+      children: [new TextRun({ text: title, bold: true })],
+      spacing: { before: 120, after: 60 }
+    }),
+    ...items.map((item) => bulletParagraph(item))
+  ];
+}
+
+function mistakeParagraphs(mistakes = []) {
+  if (!mistakes.length) return [];
+  return [
+    new Paragraph({
+      children: [new TextRun({ text: 'Mistakes to fix', bold: true })],
+      spacing: { before: 140, after: 80 }
+    }),
+    ...mistakes.map((mistake) =>
+      bodyParagraph(
+        `${mistake.category ? `${mistake.category}: ` : ''}${mistake.original} -> ${mistake.correction}${mistake.explanation ? `: ${mistake.explanation}` : ''}`
+      )
+    )
+  ];
+}
+
+function suggestionParagraphs(suggestions = []) {
+  if (!suggestions.length) return [];
+  return [
+    new Paragraph({
+      children: [new TextRun({ text: 'Suggestions', bold: true })],
+      spacing: { before: 140, after: 80 }
+    }),
+    ...suggestions.map((suggestion) =>
+      bodyParagraph(
+        `${suggestion.category ? `${suggestion.category}: ` : ''}${suggestion.original} -> ${suggestion.correction}${suggestion.explanation ? `: ${suggestion.explanation}` : ''}`
+      )
+    )
+  ];
+}
+
+function feedbackReportParagraphs(report) {
+  if (!report) return [];
+
+  return [
+    headingParagraph(report.title),
+    ...(report.level ? [bodyParagraph(`Estimated level: ${report.level}`)] : []),
+    ...(report.summary ? [bodyParagraph(report.summary)] : []),
+    ...(report.notes || []).map((note) => noteParagraph(note.label, note.text)),
+    ...feedbackListParagraphs('Main strengths', report.strengths || []),
+    ...feedbackListParagraphs('Priority advice', report.priorities || []),
+    ...(report.sections || []).flatMap((section) => [
+      new Paragraph({
+        children: [new TextRun({ text: section.title, bold: true })],
+        spacing: { before: 180, after: 80 }
+      }),
+      ...(section.question ? [bodyParagraph(`Question: ${section.question}`)] : []),
+      ...(section.studentAnswer ? [bodyParagraph(`Student response: ${section.studentAnswer}`)] : []),
+      ...(section.note ? [bodyParagraph(section.note)] : []),
+      ...(section.notes || []).map((note) => noteParagraph(note.label, note.text)),
+      ...feedbackListParagraphs('Missing or weak content', section.bullets || []),
+      ...mistakeParagraphs(section.mistakes || []),
+      ...suggestionParagraphs(section.suggestions || []),
+      ...(section.improvedVersion
+        ? [
+            new Paragraph({
+              children: [new TextRun({ text: 'Improved version', bold: true })],
+              spacing: { before: 140, after: 80 }
+            }),
+            bodyParagraph(section.improvedVersion)
+          ]
+        : []),
+      ...(section.teacherNote ? [bodyParagraph(`Teacher note: ${section.teacherNote}`)] : [])
+    ]),
+    ...(report.teacherNote ? [bodyParagraph(`Teacher note: ${report.teacherNote}`)] : [])
+  ];
+}
+
+function feedbackSectionParagraphs(feedback = {}) {
+  if (!hasGeneratedFeedback(feedback)) {
+    return [];
+  }
+
+  return [
+    new Paragraph({
+      text: 'Automated Feedback',
+      style: 'HeadingOneStyle',
+      pageBreakBefore: true
+    }),
+    bodyParagraph('AI-generated Aptis-style feedback. This is not an official Aptis score.'),
+    ...FEEDBACK_PARTS.flatMap(([partKey, label]) => {
+      const report = buildFeedbackReport(partKey, feedback[partKey]);
+      if (!report) {
+        return [];
+      }
+
+      return feedbackReportParagraphs({ ...report, title: label });
+    })
+  ];
+}
+
+export async function downloadSubmissionDocx({ submissionId, submission, mock, feedback = {} }) {
   const writingMock = mock || getWritingMock(DEFAULT_MOCK_ID);
   const part4Prompt1 = writingMock.part4.prompts[0];
   const part4Prompt2 = writingMock.part4.prompts[1];
@@ -224,6 +351,7 @@ export async function downloadSubmissionDocx({ submissionId, submission, mock })
           answerParagraph(submission.part4[0] || ''),
           questionParagraph(`2) ${part4Prompt2.heading} ${part4Prompt2.instructions}`),
           answerParagraph(submission.part4[1] || ''),
+          ...feedbackSectionParagraphs(feedback),
           new Paragraph({
             alignment: AlignmentType.RIGHT,
             children: [
